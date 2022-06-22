@@ -11,7 +11,6 @@ namespace API.Controllers
     {
         private readonly DataContext _context;
 
-        // Get data from db via dep inj
         public UsersController(DataContext context)
         {
             _context = context;
@@ -22,7 +21,6 @@ namespace API.Controllers
       
         public async Task<ActionResult<AppUser>> GetUser(int id)
         {
-            // todo: maak het naar async
             var user = await _context.Users.FindAsync(id);
             return user;
         }
