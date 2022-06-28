@@ -5,9 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class UsersController : ControllerBase
+
+    public class UsersController : BaseApiController
     {
         private readonly DataContext _context;
 
@@ -18,14 +17,14 @@ namespace API.Controllers
 
         // api/users/{id}
         [HttpGet("{id}")]
-      
+
         public async Task<ActionResult<AppUser>> GetUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
             return user;
         }
         // List is overkill, IEnum is genoeg voor dit
-        public async Task< ActionResult<IEnumerable<AppUser>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
         {
             var users = await _context.Users.ToListAsync();
             return users;
