@@ -1,5 +1,6 @@
 ﻿using API.Data;
 using API.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,7 @@ namespace API.Controllers
         }
 
         // api/users/{id}
+        [Authorize]
         [HttpGet("{id}")]
 
         public async Task<ActionResult<AppUser>> GetUser(int id)
@@ -24,6 +26,9 @@ namespace API.Controllers
             return user;
         }
         // List is overkill, IEnum is genoeg voor dit
+
+        [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
         {
             var users = await _context.Users.ToListAsync();
