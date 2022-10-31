@@ -13,7 +13,6 @@ export class AccountService {
   currentUser$ = this.currentUserSource.asObservable(); // $ is standaard voor observables
 
   constructor(private http: HttpClient) {}
-
   login(model: any) {
     //receive a user DTO
     return this.http.post(this.baseUrl + 'account/login', model).pipe(
