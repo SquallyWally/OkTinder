@@ -20,7 +20,6 @@ public class AccountController : BaseApiController
         _tokenService = tokenService;
     }
 
-
     [HttpPost("register")]
     public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
     {
@@ -41,7 +40,8 @@ public class AccountController : BaseApiController
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        return new UserDto {
+        return new UserDto
+        {
             Username = user.UserName,
             Token = _tokenService.CreateToken(user)
         };
