@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+using AutoMapper;
 
 namespace API.Controllers;
 
@@ -13,11 +14,13 @@ public class AccountController : BaseApiController
 {
     private readonly DataContext _context;
     private readonly ITokenService _tokenService;
+    private readonly IMapper _mapper;
 
-    public AccountController(DataContext context, ITokenService tokenService)
+    public AccountController(DataContext context, ITokenService tokenService, IMapper mapper)
     {
         _context = context;
         _tokenService = tokenService;
+        _mapper = mapper;
     }
 
     [HttpPost("register")]
@@ -28,14 +31,12 @@ public class AccountController : BaseApiController
             return BadRequest("Username is taken");
         }
 
+        var user = _mapper.Map<AppUser>(registerDto);
         using var hmac = new HMACSHA512(); // it will be disposed when we are finished with this class
 
-        var user = new AppUser
-        {
-            UserName = registerDto.Username.ToLower(),
-            PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password)),
-            PasswordSalt = hmac.Key
-        };
+        user.UserName = registerDto.Username.ToLower();
+        user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password));
+        user.PasswordSalt = hmac.Key;
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
@@ -43,14 +44,16 @@ public class AccountController : BaseApiController
         return new UserDto
         {
             Username = user.UserName,
-            Token = _tokenService.CreateToken(user)
+            Token = _tokenService.CreateToken(user),
+            KnownAs = user.KnownAs
         };
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<UserDto>> Login(LoginDto loginDto)
     {
-        var user = await _context.Users.Include(p => p.Photos).SingleOrDefaultAsync(x => x.UserName == loginDto.Username); // We do or dont have a user
+        var user = await _context.Users.Include(p => p.Photos)
+            .SingleOrDefaultAsync(x => x.UserName == loginDto.Username); // We do or dont have a user
 
         if (user is null)
         {
@@ -59,7 +62,9 @@ public class AccountController : BaseApiController
 
         using var hmac = new HMACSHA512(user.PasswordSalt); // it overloads a new instance
 
-        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password)); // checks if the salt and password are identical
+        var computedHash =
+            hmac.ComputeHash(
+                Encoding.UTF8.GetBytes(loginDto.Password)); // checks if the salt and password are identical
 
         if (computedHash.Where((t, i) => t != user.PasswordHash[i]).Any())
         {
@@ -70,7 +75,8 @@ public class AccountController : BaseApiController
         {
             Username = user.UserName,
             Token = _tokenService.CreateToken(user),
-            PhotoUrl = user.Photos.FirstOrDefault(p => p.IsMain)?.Url
+            PhotoUrl = user.Photos.FirstOrDefault(p => p.IsMain)?.Url,
+            KnownAs = user.KnownAs
         };
     }
 

@@ -5,8 +5,8 @@ import { environment } from '../../../environments/environment';
 import { AccountService } from '../../_services/account.service';
 import { User } from '../../_models/user';
 import { take } from 'rxjs/operators';
-import {MembersService} from "../../_services/members.service";
-import {Photo} from "../../_models/photo";
+import { MembersService } from '../../_services/members.service';
+import { Photo } from '../../_models/photo';
 
 @Component({
   selector: 'app-photo-editor',
@@ -20,7 +20,10 @@ export class PhotoEditorComponent implements OnInit {
   base_url = environment.apiUrl;
   user: User;
 
-  constructor(private accountService: AccountService, private memberService: MembersService) {
+  constructor(
+    private accountService: AccountService,
+    private memberService: MembersService
+  ) {
     this.accountService.currentUser$
       .pipe(take(1))
       .subscribe((user) => (this.user = user));
@@ -39,17 +42,17 @@ export class PhotoEditorComponent implements OnInit {
       this.user.photoUrl = photo.url;
       this.accountService.setCurrentUser(this.user);
       this.member.photoUrl = photo.url;
-      this.member.photos.forEach(p => {
-        if(p.isMain) p.isMain = false;
-        if(p.id === photo.id) p.isMain = true;
-      })
-    })
+      this.member.photos.forEach((p) => {
+        if (p.isMain) p.isMain = false;
+        if (p.id === photo.id) p.isMain = true;
+      });
+    });
   }
 
-  deletePhoto(photoId: number){
+  deletePhoto(photoId: number) {
     this.memberService.deletePhoto(photoId).subscribe(() => {
-      this.member.photos = this.member.photos.filter(x => x.id !== photoId);
-    })
+      this.member.photos = this.member.photos.filter((x) => x.id !== photoId);
+    });
   }
   initializeUploader() {
     this.uploader = new FileUploader({
@@ -66,16 +69,15 @@ export class PhotoEditorComponent implements OnInit {
       file.withCredentials = false;
     };
 
-    this.uploader.onProgressItem = (progress: any) => {
-      console.log(progress['progress']);
-      console.log(this.base_url + 'users/add-photo');
-      console.log('Bearer' + this.user.token);
-    };
-
     this.uploader.onSuccessItem = (item, response, status, headers) => {
       if (response) {
         const photo = JSON.parse(response);
-        this.member.photos.push(photo);
+        this.member?.photos.push(photo);
+        if (photo.isMain && this.user && this.member) {
+          this.user.photoUrl = photo.url;
+          this.member.photoUrl = photo.url;
+          this.accountService.setCurrentUser(this.user);
+        }
       }
     };
   }
