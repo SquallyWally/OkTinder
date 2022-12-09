@@ -19,9 +19,9 @@
         public PaginationHeader(int currentPage, int itemsPerPage, int totalItems, int totalPages)
         {
             CurrentPage = currentPage;
-            TotalPages = totalPages;
             ItemsPerPage = itemsPerPage;
             TotalItems = totalItems;
+            TotalPages = totalPages;
         }
     }
 }

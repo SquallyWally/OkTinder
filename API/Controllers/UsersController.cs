@@ -26,6 +26,14 @@ namespace API.Controllers
         [HttpGet]
         public async Task<ActionResult<PagedList<MemberDto>>> GetUsers([FromQuery] UserParams userParams)
         {
+            var currentUser = await _userRepository.GetUserByUsernameAsync(User.GetUsername());
+            userParams.CurrentUsername = currentUser.UserName;
+
+            if (string.IsNullOrEmpty(userParams.Gender))
+            {
+                userParams.Gender = currentUser.Gender == "male" ? "female" : "male";
+            }
+            
             var users = await _userRepository.GetMembersAsync(userParams);
 
             Response.AddPaginationHeader(new PaginationHeader(
@@ -33,6 +41,7 @@ namespace API.Controllers
                 users.PageSize,
                 users.TotalCount,
                 users.TotalPages));
+            
             return Ok(users);
         }
 
@@ -97,7 +106,7 @@ namespace API.Controllers
 
             var currentMain = user.Photos.FirstOrDefault(p => p.IsMain);
             if (currentMain is not null) currentMain.IsMain = false;
-            photo.IsMain = true;
+            if (photo != null) photo.IsMain = true;
 
             if (await _userRepository.SaveAllAsync())
             {
