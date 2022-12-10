@@ -13,10 +13,15 @@ import { UserParams } from '../_models/userParams';
 export class MembersService {
   baseUrl = environment.apiUrl;
   members: Member[] = [];
+  memberCache = new Map();
 
   constructor(private http: HttpClient) {}
 
   getMembers(userParams: UserParams) {
+    const response = this.memberCache.get(Object.values(userParams).join('-'));
+
+    if (response) return of(response);
+
     let params = this.getPaginationHeaders(
       userParams.pageNumber,
       userParams.pageSize
@@ -25,30 +30,25 @@ export class MembersService {
     params = params.append('minAge', userParams.minAge);
     params = params.append('maxAge', userParams.maxAge);
     params = params.append('gender', userParams.gender);
+    params = params.append('orderBy', userParams.orderBy);
 
-    return this.getPaginatedResults<Member[]>(this.baseUrl + 'users', params);
-  }
-
-  getPaginatedResults<T>(url: string, params: HttpParams) {
-    const paginatedResult: PaginatedResult<T> = new PaginatedResult<T>();
-
-    return this.http.get<T>(url, { observe: 'response', params }).pipe(
+    return this.getPaginatedResults<Member[]>(
+      this.baseUrl + 'users',
+      params
+    ).pipe(
       map((response) => {
-        if (response.body) {
-          paginatedResult.result = response.body;
-        }
-        const pagination = response.headers.get('Pagination');
-        if (pagination) {
-          paginatedResult.pagination = JSON.parse(pagination);
-        }
-        return paginatedResult;
+        this.memberCache.set(Object.values(userParams).join('-'), response);
+        return response;
       })
     );
   }
 
   getMember(username: string) {
-    const member = this.members.find((x) => x.userName === username);
-    if (member !== undefined) return of(member);
+    const member = [...this.memberCache.values()]
+      .reduce((arr, elem) => arr.concat(elem.result), [])
+      .find((member: Member) => member.userName === username);
+
+    if (member) return of(member);
     return this.http.get<Member>(this.baseUrl + 'users/' + username);
   }
 
@@ -67,6 +67,23 @@ export class MembersService {
 
   deletePhoto(photoId: number) {
     return this.http.delete(this.baseUrl + 'users/delete-photo/' + photoId);
+  }
+
+  private getPaginatedResults<T>(url: string, params: HttpParams) {
+    const paginatedResult: PaginatedResult<T> = new PaginatedResult<T>();
+
+    return this.http.get<T>(url, { observe: 'response', params }).pipe(
+      map((response) => {
+        if (response.body) {
+          paginatedResult.result = response.body;
+        }
+        const pagination = response.headers.get('Pagination');
+        if (pagination) {
+          paginatedResult.pagination = JSON.parse(pagination);
+        }
+        return paginatedResult;
+      })
+    );
   }
 
   private getPaginationHeaders(pageNumber: number, pageSize: number) {
