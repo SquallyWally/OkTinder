@@ -4,14 +4,6 @@ namespace API.Helpers
 {
     public class PagedList<T> : List<T>
     {
-        public int CurrentPage { get; set; }
-
-        public int TotalPages { get; set; }
-
-        public int PageSize { get; set; }
-
-        public int TotalCount { get; set; }
-
         public PagedList(IEnumerable<T> items, int count, int pageNumber, int pageSize)
         {
             CurrentPage = pageNumber;
@@ -21,6 +13,11 @@ namespace API.Helpers
             AddRange(items);
         }
 
+        public int CurrentPage { get; set; }
+        public int TotalPages { get; set; }
+        public int PageSize { get; set; }
+        public int TotalCount { get; set; }
+
         /// <summary>
         ///  This method is used to created a asynced page
         /// <param name="source">Query being built up in memory by EF</param>>
@@ -28,7 +25,8 @@ namespace API.Helpers
         /// <param name="pageSize">Page size</param>>
         /// </summary>
         /// 
-        public static async Task<PagedList<T>> CreateAsync(IQueryable<T> source, int pageNumber, int pageSize)
+        public static async Task<PagedList<T>> CreateAsync(IQueryable<T> source,
+            int pageNumber, int pageSize)
         {
             var count = await source.CountAsync();
             var items = await source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();

@@ -1,6 +1,7 @@
 using API.Data;
 using API.Helpers;
 using API.Interfaces;
+using API.Repositories;
 using API.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +21,7 @@ namespace API.Extensions
             {
                 options.UseSqlite(config.GetConnectionString("DefaultConnection"));
             });
-            
+            services.AddScoped<ILikesRepository, LikesRepository>();
             return services;
         }
     }
