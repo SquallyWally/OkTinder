@@ -1,4 +1,5 @@
-﻿using API.Helpers;
+﻿using API.Entities;
+using API.Helpers;
 using API.Interfaces;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
@@ -43,5 +44,29 @@ public class PhotoService : IPhotoService
         var deleteParams = new DeletionParams(publicId);
         
         return await _cloudinary.DestroyAsync(deleteParams);
+    }
+    
+    public Photo AddPhotoToUser(ImageUploadResult result, AppUser user)
+    {
+        var photo = new Photo
+        {
+            Url = result.SecureUrl.AbsoluteUri,
+            PublicId = result.PublicId
+        };
+
+        if (user.Photos.Count == 0)
+        {
+            photo.IsMain = true;
+        }
+
+        user.Photos.Add(photo);
+        return photo;
+    }
+    
+    public void IsPhotoMain(AppUser user, Photo photo)
+    {
+        var currentMain = user.Photos.FirstOrDefault(p => p.IsMain);
+        if (currentMain is not null) currentMain.IsMain = false;
+        if (photo != null) photo.IsMain = true;
     }
 }
