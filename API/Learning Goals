@@ -1,0 +1,11 @@
+﻿Using .NET identny
+Role management
+Policy based auth met JWT
+User/SignIn/RoleManger Generics ( met Factory method als ze hetzelfde ish moeten zijn>)
+
+Waarom Role Indenty?
+-Betrouwbaar vanuit MS
+-Password hjasher met 10k salt iteraties (goed tegen database aanvallen, maar niet fullproof)
+-full framework met managing members en rllen
+-EF Schema
+-Aanpasbaar

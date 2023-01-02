@@ -1,5 +1,4 @@
-﻿using System.Runtime.InteropServices.ComTypes;
-using API.Data;
+﻿using API.Data;
 using API.DTOs;
 using API.Entities;
 using API.Extensions;
@@ -11,6 +10,7 @@ namespace API.Repositories
 {
     public class LikesRepository : ILikesRepository
     {
+        
         private readonly DataContext _context;
 
         public LikesRepository(DataContext context)
@@ -59,5 +59,6 @@ namespace API.Repositories
 
             return await PagedList<LikeDto>.CreateAsync(likedUsers, likesParams.PageNumber, likesParams.PageSize);
         }
+        
     }
 }

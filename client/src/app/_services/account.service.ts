@@ -12,8 +12,10 @@ export class AccountService {
   baseUrl = environment.apiUrl;
   private currentUserSource = new ReplaySubject<User>(1); //emits old values to new subscribers
   currentUser$ = this.currentUserSource.asObservable(); // $ is standaard voor observables
+  CONST_ROLE_AND_INFO_CRED_IN_ARRAY = 1;
 
   constructor(private http: HttpClient) {}
+
   login(model: any) {
     //receive a user DTO
     return this.http.post(this.baseUrl + 'account/login', model).pipe(
@@ -36,13 +38,22 @@ export class AccountService {
     );
   }
 
-  logout() {
-    localStorage.removeItem('user');
-    this.setCurrentUser(null);
-  }
-
   setCurrentUser(user: User) {
+    user.roles = [];
+    const roles = this.getDecodedToken(user.token).role; //claim name is called role inside the decoded json token
+    Array.isArray(roles) ? (user.roles = roles) : user.roles.push(roles);
     localStorage.setItem('user', JSON.stringify(user));
     this.currentUserSource.next(user);
+  }
+
+  logout() {
+    localStorage.removeItem('user');
+    this.currentUserSource.next(null);
+  }
+
+  getDecodedToken(token: string) {
+    return JSON.parse(
+      atob(token.split('.')[this.CONST_ROLE_AND_INFO_CRED_IN_ARRAY])
+    );
   }
 }
