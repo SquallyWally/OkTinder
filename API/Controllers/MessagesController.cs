@@ -1,5 +1,4 @@
 ﻿using API.DTOs;
-using API.Entities;
 using API.Extensions;
 using API.Helpers;
 using API.Interfaces;
@@ -32,7 +31,7 @@ public class MessagesController : BaseApiController
         var sender = await _userService.GetUserByUsername(username);
         var recipient = await _userService.GetUserByUsername(createMessageDto.RecipientUsername);
 
-        if (recipient == null) return NotFound();
+        if (recipient is null) return NotFound();
 
         var message = _messageService.AddMessage(createMessageDto, sender, recipient);
 

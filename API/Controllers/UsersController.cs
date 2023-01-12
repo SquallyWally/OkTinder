@@ -22,7 +22,7 @@ namespace API.Controllers
             _photoService = photoService;
             _userService = userService;
         }
-
+        
         [HttpGet]
         public async Task<ActionResult<PagedList<MemberDto>>> GetUsers([FromQuery] UserParams userParams)
         {
@@ -41,6 +41,7 @@ namespace API.Controllers
 
         
         // api/users/{username}
+        [Authorize(Roles = "Member")]
         [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult<MemberDto>> GetUser(string username)
         {
@@ -106,7 +107,7 @@ namespace API.Controllers
                     return BadRequest("This is already your main photo");
             }
 
-            if (photo.PublicId != null)
+            if (photo.PublicId is not null)
             {
                 var result = await _photoService.DeletePhotoAsync(photo.PublicId);
                 if (result.Error != null) return BadRequest(result.Error.Message);
