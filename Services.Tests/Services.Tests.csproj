@@ -16,7 +16,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\APITestsHelper\APITestsHelper.csproj" />
       <ProjectReference Include="..\API\API.csproj" />
     </ItemGroup>
 
