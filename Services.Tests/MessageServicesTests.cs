@@ -45,7 +45,7 @@ public class MessageServicesTests
     }
 
     [Test]
-    public void AddMessage_Adds_Message_To_Repository()
+    public void TestAddMessage_Adds_Message_To_Repository()
     {
         // Act
         var message = _messageService.AddMessage(_createMessageDto, _sender, _recipient);
@@ -59,7 +59,7 @@ public class MessageServicesTests
     }
 
     [Test]
-    public async Task SaveAllMessagesAsync_Calls_SaveAllAsync_On_Repository()
+    public async Task TestSaveAllMessagesAsync_Calls_SaveAllAsync_On_Repository()
     {
         // Arrange
         _mockMessageRepository.Setup(x => x.SaveAllAsync()).ReturnsAsync(true);
@@ -67,13 +67,13 @@ public class MessageServicesTests
         // Act
         var result = await _messageService.SaveAllMessagesAsync();
         _mockMessageRepository.Verify(x => x.SaveAllAsync(), Times.Once);
-        
+
         // Assert
         Assert.IsTrue(result);
     }
 
     [Test]
-    public async Task GetMessageThead_Calls_GetMessageThread_On_Repository()
+    public async Task TestGetMessageThead_Calls_GetMessageThread_On_Repository()
     {
         // Arrange
         var expectedThread = new List<MessageDto>
@@ -89,13 +89,13 @@ public class MessageServicesTests
         // Act
         var result = await _messageService.GetMessageThread("username", "currentUsername");
         _mockMessageRepository.Verify(x => x.GetMessageThread("currentUsername", "username"), Times.Once);
-        
+
         // Assert
         Assert.AreEqual(expectedThread, result);
     }
 
     [Test]
-    public async Task GetMessagesForUser_Returns_Inbox_Messages_When_Container_Is_Inbox()
+    public async Task TestGetMessagesForUser_Returns_Inbox_Messages_When_Container_Is_Inbox()
     {
         // Arrange
         var messageParams = new MessageParams {Container = "Inbox", Username = "user1"};
@@ -122,15 +122,14 @@ public class MessageServicesTests
     }
 
     [Test]
-    public async Task GetMessagesForUser_Returns_Inbox_Messages_When_Container_Is_Outbox()
+    public async Task TestGetMessagesForUser_Returns_Inbox_Messages_When_Container_Is_Outbox()
     {
         // Arrange
         var messageParams = new MessageParams {Container = "Outbox", Username = "user1"};
         var messages = _testMessages.Where(m => m.SenderUsername == "user1" && m.SenderDeleted == false)
             .AsEnumerable();
-        
-        var messageDtos = _mapper.Map<IEnumerable<MessageDto>>(messages);
 
+        var messageDtos = _mapper.Map<IEnumerable<MessageDto>>(messages);
 
         var pagedList = new PagedList<MessageDto>(messageDtos, 3, 1, 2);
         _mockMessageRepository
@@ -149,7 +148,7 @@ public class MessageServicesTests
     }
 
     [Test]
-    public async Task GetMessagesForUser_Returns_Unread_Messages_When_Container_Is_Unread()
+    public async Task TestGetMessagesForUser_Returns_Unread_Messages_When_Container_Is_Unread()
     {
         // Arrange
         var messageParams = new MessageParams {Container = "Unread", Username = "user1"};
@@ -160,10 +159,10 @@ public class MessageServicesTests
         _mockMessageRepository
             .Setup(x => x.GetMessagesForUser(messageParams))
             .ReturnsAsync(pagedList);
-        
+
         // Act
         var result = await _messageService.GetMessagesForUser(messageParams);
-        
+
         // Assert
         Assert.AreEqual(1, result.TotalCount);
         Assert.AreEqual(1, result.CurrentPage);

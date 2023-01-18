@@ -1,9 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
 using API.Helpers;
 using API.Interfaces;
 using API.Services;
+using AutoMapper;
 using Moq;
 using NUnit.Framework;
 
@@ -14,21 +16,27 @@ public class LikesServiceTests
     private ILikesService _likesService;
     private AppUser _sourceUser;
     private AppUser _likedUser;
-    private LikesParams _likesParams;
     private Mock<ILikesRepository> _likesRepository;
     private UserLike _userLike;
+    private IEnumerable<UserLike> _testLikes;
+    private IMapper _mapper;
 
 
     [SetUp]
     public void SetUp()
     {
-        // Set up test data here, e.g.
+        var config = new MapperConfiguration(cfg => { cfg.CreateMap<UserLike, LikeDto>(); });
+        _mapper = config.CreateMapper();
         _sourceUser = new AppUser {Id = 1};
         _likedUser = new AppUser {Id = 2};
-        _likesParams = new LikesParams();
         _userLike = new UserLike {SourceUserId = 1, TargetUserId = 2};
         _likesRepository = new Mock<ILikesRepository>();
         _likesService = new LikesService(_likesRepository.Object);
+        _testLikes = new List<UserLike>
+        {
+            new() {SourceUserId = 1, TargetUserId = 2},
+            new() {SourceUserId = 1, TargetUserId = 2}
+        };
     }
 
 
@@ -90,18 +98,40 @@ public class LikesServiceTests
         Assert.IsNull(result);
     }
 
-    //[Test]
+    [Test]
     public async Task TestGetUsersLikes_ReturnsCorrectPageSize()
     {
         // Arrange
-        _likesParams.PageSize = 5;
-        
+        var likesParams = new LikesParams {UserId = _sourceUser.Id, Predicate = "liked"};
+        var likeDtos = _mapper.Map<IEnumerable<LikeDto>>(_testLikes);
+        var pagedList = new PagedList<LikeDto>(likeDtos, 1, 1, 1);
+        _likesRepository
+            .Setup(x => x.GetUsersLikes(likesParams))
+            .ReturnsAsync(pagedList);
         
         // Act
-        var result = await _likesService.GetUsersLikes(_likesParams);
+        var result = await _likesService.GetUsersLikes(likesParams);
         
         // Assert
-        Assert.AreEqual(5, result.PageSize);
+        Assert.AreEqual(1, result.PageSize);
+    }
+    
+    [Test]
+    public async Task TestGetUsersLikes_ReturnsPagedListsOfObjects()
+    {
+        // Arrange
+        var likesParams = new LikesParams {UserId = _sourceUser.Id, Predicate = "liked"};
+        var likeDtos = _mapper.Map<IEnumerable<LikeDto>>(_testLikes);
+        var pagedList = new PagedList<LikeDto>(likeDtos, 1, 1, 1);
+        _likesRepository
+            .Setup(x => x.GetUsersLikes(likesParams))
+            .ReturnsAsync(pagedList);
+        
+        // Act
+        var result = await _likesService.GetUsersLikes(likesParams);
+        
+        // Assert
+        
     }
     
 }
