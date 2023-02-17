@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using API.DTOs;
 using API.Entities;
 using API.Helpers;
@@ -95,11 +96,10 @@ public class LikesServiceTests
     {
         // Arrange
         _likesParams.PageSize = 5;
-        
-        
+
         // Act
         var result = await _likesService.GetUsersLikes(_likesParams);
-        
+
         // Assert
         Assert.AreEqual(5, result.PageSize);
     }

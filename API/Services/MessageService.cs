@@ -59,4 +59,29 @@ public class MessageService : IMessageService
         if (message.SenderUsername == username) message.SenderDeleted = true;
         if (message.RecipientUsername == username) message.RecipientDeleted = true;
     }
+
+    public void AddGroup(Group group)
+    {
+        _messageRepository.AddGroup(group);
+    }
+
+    public void RemoveConnection(Connection connection)
+    {
+        _messageRepository.RemoveConnection(connection);
+    }
+
+    public async Task<Connection> GetConnection(string connectionId)
+    {
+       return await _messageRepository.GetConnection(connectionId);
+    }
+
+    public async Task<Group> GetMessageGroup(string groupName)
+    {
+        return await _messageRepository.GetMessageGroup(groupName);
+    }
+
+    public async Task<Group> GetGroupForConnection(string connectionId)
+    {
+        return await _messageRepository.GetMessageGroup(connectionId);
+    }
 }
