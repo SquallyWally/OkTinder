@@ -13,4 +13,10 @@ public interface IMessageService
     Task<Message> GetMessage(int id);
     void DeleteMessage(Message message);
     void DeleteSenderOrRecipientMessage(Message message, string username);
+
+    void AddGroup(Group group);
+    void RemoveConnection(Connection connection);
+    Task<Connection> GetConnection(string connectionId);
+    Task<Group> GetMessageGroup(string groupName);
+    Task<Group> GetGroupForConnection(string connectionId);
 }

@@ -1,18 +1,18 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Member } from '../../_models/member';
-import { ActivatedRoute } from '@angular/router';
+import {Component, OnDestroy, OnInit, ViewChild} from '@angular/core';
+import {Member} from '../../_models/member';
+import {ActivatedRoute, Router} from '@angular/router';
 import {
   NgxGalleryAnimation,
   NgxGalleryImage,
   NgxGalleryOptions,
 } from '@kolkov/ngx-gallery';
-import { TabDirective, TabsetComponent } from 'ngx-bootstrap/tabs';
-import { MessageService } from '../../_services/message.service';
-import { Message } from '../../_models/message';
-import { PresenceService } from '../../_services/presence.service';
-import { AccountService } from '../../_services/account.service';
-import { User } from '../../_models/user';
-import { take } from 'rxjs/operators';
+import {TabDirective, TabsetComponent} from 'ngx-bootstrap/tabs';
+import {MessageService} from '../../_services/message.service';
+import {Message} from '../../_models/message';
+import {PresenceService} from '../../_services/presence.service';
+import {AccountService} from '../../_services/account.service';
+import {User} from '../../_models/user';
+import {take} from 'rxjs/operators';
 
 @Component({
   selector: 'app-member-detail',
@@ -20,7 +20,7 @@ import { take } from 'rxjs/operators';
   styleUrls: ['./member-detail.component.css'],
 })
 export class MemberDetailComponent implements OnInit, OnDestroy {
-  @ViewChild('memberTabs', { static: true }) memberTabs: TabsetComponent;
+  @ViewChild('memberTabs', {static: true}) memberTabs: TabsetComponent;
   member: Member = {} as Member;
   galleryOptions: NgxGalleryOptions[];
   galleryImages: NgxGalleryImage[];
@@ -32,13 +32,16 @@ export class MemberDetailComponent implements OnInit, OnDestroy {
     private accountService: AccountService,
     private route: ActivatedRoute,
     private messageService: MessageService,
-    public presenceService: PresenceService
+    public presenceService: PresenceService,
+    private router: Router
   ) {
     this.accountService.currentUser$.pipe(take(1)).subscribe({
       next: (user) => {
         if (user) this.user = user;
       },
     });
+
+    this.router.routeReuseStrategy.shouldReuseRoute = () => false;
   }
 
   ngOnInit(): void {
