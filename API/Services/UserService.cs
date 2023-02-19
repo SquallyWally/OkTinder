@@ -8,51 +8,51 @@ namespace API.Services;
 
 public class UserService : IUserService
 {
-    private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UserService(IUserRepository userRepository, IMapper mapper)
+    public UserService(IUnitOfWork unitOfWork, IMapper mapper )
     {
-        _userRepository = userRepository;
         _mapper = mapper;
+        _unitOfWork = unitOfWork;
     }
     
     public async Task SetDefaultGenderFilter(UserParams userParams, string username)
     {
-        var currentUser = await _userRepository.GetUserByUsernameAsync(username);
-        userParams.CurrentUsername = currentUser.UserName;
+        var gender = await _unitOfWork.UserRepository.GetUserGender(username);
+        userParams.CurrentUsername = username;
 
         if (string.IsNullOrEmpty(userParams.Gender))
         {
-            userParams.Gender = currentUser.Gender == "male" ? "female" : "male";
+            userParams.Gender = gender == "male" ? "female" : "male";
         }
     }
     
     public async Task UpdateUser(MemberUpdateDto memberUpdateDto, string username)
     {
-        var user = await _userRepository.GetUserByUsernameAsync(username);
+        var user = await _unitOfWork.UserRepository.GetUserByUsernameAsync(username);
 
         _mapper.Map(memberUpdateDto, user);
-        _userRepository.Update(user);
+        _unitOfWork.UserRepository.Update(user);
     }
     
     public async Task<PagedList<MemberDto>> GetMembers(UserParams userParams)
     {
-        return await _userRepository.GetMembersAsync(userParams);
+        return await _unitOfWork.UserRepository.GetMembersAsync(userParams);
     }
     
     public async Task<MemberDto> GetMember(string username)
     {
-        return await _userRepository.GetMemberAsync(username);
+        return await _unitOfWork.UserRepository.GetMemberAsync(username);
     }
     
     public async Task<AppUser> GetUserByUsername(string username)
     {
-        return  await _userRepository.GetUserByUsernameAsync(username);
+        return  await _unitOfWork.UserRepository.GetUserByUsernameAsync(username);
     }
 
     public async Task<bool> SaveAllUserAsync()
     {
-        return await _userRepository.SaveAllAsync();
+        return await _unitOfWork.Complete();
     }
 }

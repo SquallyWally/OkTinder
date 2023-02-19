@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
+using API.Data;
 using API.DTOs;
 using API.Entities;
 using API.Helpers;
@@ -16,9 +18,7 @@ public class LikesServiceTests
     private AppUser _sourceUser;
     private AppUser _likedUser;
     private LikesParams _likesParams;
-    private Mock<ILikesRepository> _likesRepository;
-    private UserLike _userLike;
-
+    private Mock<IUnitOfWork> _unitOfWork;
 
     [SetUp]
     public void SetUp()
@@ -27,9 +27,8 @@ public class LikesServiceTests
         _sourceUser = new AppUser {Id = 1};
         _likedUser = new AppUser {Id = 2};
         _likesParams = new LikesParams();
-        _userLike = new UserLike {SourceUserId = 1, TargetUserId = 2};
-        _likesRepository = new Mock<ILikesRepository>();
-        _likesService = new LikesService(_likesRepository.Object);
+        _unitOfWork = new Mock<IUnitOfWork>();
+        _likesService = new LikesService(_unitOfWork.Object);
     }
 
 
@@ -39,7 +38,8 @@ public class LikesServiceTests
         // Arrange
         const int sourceUserId = 1;
         var expectedUser = new AppUser {Id = 1, UserName = "John"};
-        _likesRepository.Setup(repo => repo.GetUsersWithLikes(sourceUserId))
+
+        _unitOfWork.Setup(uow => uow.LikesRepository.GetUsersWithLikes(sourceUserId))
             .ReturnsAsync(expectedUser);
 
         // Act
@@ -48,13 +48,13 @@ public class LikesServiceTests
         // Assert
         Assert.AreEqual(expectedUser, result);
     }
-    
+
     [Test]
     public async Task TestGetUsersWithLikes_InvalidUserId_ReturnsNull()
     {
         // Arrange
         const int invalidUser = -1;
-        _likesRepository.Setup(repo => repo.GetUsersWithLikes(invalidUser))
+        _unitOfWork.Setup(uow => uow.LikesRepository.GetUsersWithLikes(invalidUser))
             .ReturnsAsync((AppUser) null!);
 
         // Act
@@ -68,8 +68,8 @@ public class LikesServiceTests
     public async Task TestGetUserLike_ValidInput_ReturnsExpectedUserLike()
     {
         // Act
-        _likesRepository.Setup(repo => repo.GetUserLike(1, 2))
-            .ReturnsAsync(new UserLike { SourceUserId = 1, TargetUserId = 2 });
+        _unitOfWork.Setup(uow => uow.LikesRepository.GetUserLike(1, 2))
+            .ReturnsAsync(new UserLike {SourceUserId = 1, TargetUserId = 2});
         var result = await _likesService.GetUserLike(1, _likedUser);
 
         // Assert
@@ -82,50 +82,38 @@ public class LikesServiceTests
     public async Task TestGetUserLike_InvalidInput_ReturnsNull()
     {
         // Arrange
-        var invalidLikedUser = new AppUser { Id = 4 };
-        
+        var invalidLikedUser = new AppUser {Id = 4};
+
         //Act
         var result = await _likesService.GetUserLike(-1, invalidLikedUser);
-        
+        Console.WriteLine("Null?");
+        Console.WriteLine( 1 == 1);
+        var new_result = await _likesService.GetUserLike(-1, invalidLikedUser);
+
         //Assert
         Assert.IsNull(result);
+        Assert.IsNull(new_result);
     }
 
     [Test]
     public async Task TestGetUsersLikes_ReturnsCorrectPageSize()
     {
-        // Arrange
-        _likesParams.PageSize = 5;
+        var likes = Enumerable.Range(1, 10)
+            .Select(i => new UserLike {SourceUserId = _sourceUser.Id, TargetUserId = i})
+            .ToList();
+
+        _unitOfWork.Setup(uow => uow.LikesRepository.GetUsersLikes(_likesParams))
+            .ReturnsAsync(new PagedList<LikeDto>(
+                likes.Select(l => new LikeDto {Id = l.TargetUserId, UserName = $"User{l.TargetUserId}"}),
+                10, 1, 1));
 
         // Act
         var result = await _likesService.GetUsersLikes(_likesParams);
 
         // Assert
-        Assert.AreEqual(5, result.PageSize);
+        Assert.IsNotNull(result);
+        Assert.AreEqual(10, result.Count);
+        Assert.AreEqual(10, result.TotalCount);
+        Assert.AreEqual(10, result.TotalPages);
     }
-    
 }
-
-
-// GetUsersWithLikes method:
-//
-// Test case: Verify that the method returns the expected user when given a valid sourceUserId.
-// Test case: Verify that the method returns a null value when given an invalid sourceUserId.
-//
-// GetUserLike method:
-//
-// Test that the method returns the correct UserLike object when given valid input.
-//     Test that the method returns null when given an invalid sourceUserId.
-//     Test that the method returns null when given an invalid targetUserId.
-//     Test that the method throws an exception when the database is not available.
-//     Test that the method returns null when there is no matching UserLike object in the database.
-//
-// GetUsersLikes method:
-//
-// Test case: Verify that the method returns a PagedList of LikeDto objects when given valid likesParams.
-// Test case: Verify that the method returns an empty PagedList when given invalid likesParams.
-//
-// AddUserLike method:
-//
-// Test case: Verify that the method correctly adds a UserLike object to the sourceUser.LikedUsers collection when given valid input.
-// Test case: Verify that the userLike output parameter is correctly set when given valid input.
