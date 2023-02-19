@@ -11,20 +11,20 @@ namespace API.SignalR;
 [Authorize]
 public class MessageHub : Hub
 {
-    private readonly IMessageRepository _messageRepository;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IUserService _userService;
     private readonly IMessageService _messageService;
     private readonly IMapper _mapper;
     private readonly IHubContext<PresenceHub> _presenceHub;
 
     public MessageHub(
-        IMessageRepository messageRepository,
+        IUnitOfWork unitOfWork,
         IUserService userService,
         IMessageService messageService,
         IMapper mapper,
         IHubContext<PresenceHub> presenceHub)
     {
-        _messageRepository = messageRepository;
+        _unitOfWork = unitOfWork;
         _userService = userService;
         _messageService = messageService;
         _mapper = mapper;
@@ -43,9 +43,11 @@ public class MessageHub : Hub
 
             await Clients.Group(groupName).SendAsync("UpdatedGroup", group);
 
-            var messages = await _messageRepository
+            var messages = await _unitOfWork.MessageRepository
                 .GetMessageThread(Context.User.GetUsername(), otherUser);
 
+            if (_unitOfWork.HasChanges()) await _unitOfWork.Complete();
+            
             await Clients.Caller.SendAsync("ReceiveMessageThread", messages);
         }
     }
@@ -139,7 +141,7 @@ public class MessageHub : Hub
 
         group.Connections.Add(connection);
 
-        if (await _messageRepository.SaveAllAsync()) return group;
+        if (await _unitOfWork.Complete()) return group;
 
         throw new HubException("Failed to add to group");
     }
@@ -151,7 +153,7 @@ public class MessageHub : Hub
         _messageService.RemoveConnection(connection);
 
 
-        if (await _messageRepository.SaveAllAsync()) return group;
+        if (await _unitOfWork.Complete()) return group;
 
         throw new HubException("Failed to remove from group");
     }

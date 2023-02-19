@@ -7,26 +7,26 @@ namespace API.Services;
 
 public class LikesService : ILikesService
 {
-    private readonly ILikesRepository _likesRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public LikesService(ILikesRepository likesRepository)
+    public LikesService(IUnitOfWork unitOfWork)
     {
-        _likesRepository = likesRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<AppUser> GetUsersWithLikes(int sourceUserId)
     {
-        return await _likesRepository.GetUsersWithLikes(sourceUserId);
+        return await _unitOfWork.LikesRepository.GetUsersWithLikes(sourceUserId);
     }
 
     public async Task<UserLike> GetUserLike(int sourceUserId, AppUser likedUser)
     {
-        return await _likesRepository.GetUserLike(sourceUserId, likedUser.Id);
+        return await _unitOfWork.LikesRepository.GetUserLike(sourceUserId, likedUser.Id);
     }
 
     public async Task<PagedList<LikeDto>> GetUsersLikes(LikesParams likesParams)
     {
-        return await _likesRepository.GetUsersLikes(likesParams);
+        return await _unitOfWork.LikesRepository.GetUsersLikes(likesParams);
     }
 
     public void AddUserLike(int sourceUserId, AppUser likedUser, AppUser sourceUser, out UserLike userLike)
