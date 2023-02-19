@@ -57,26 +57,19 @@ public class MessageRepository : IMessageRepository
 
     public async Task<IEnumerable<MessageDto>> GetMessageThread(string currentUsername, string recipientUsername)
     {
-        var messages = await GetMessages(currentUsername, recipientUsername);
-        messages = messages.OrderBy(m => m.MessageSent).ToList();
+        var query = await GetMessages(currentUsername, recipientUsername);
+        var unreadMessages = query.Where(d => d.DateRead == null
+                                              && d.RecipientUsername == currentUsername).ToList();
 
-        var unreadMessages = messages.Where(d => d.DateRead == null
-                                                 && d.RecipientUsername == currentUsername).ToList();
-        if (!unreadMessages.Any()) return _mapper.Map<IEnumerable<MessageDto>>(messages);
-        
-        foreach (var message in unreadMessages)
+        if (!unreadMessages.Any())
         {
-            message.DateRead = DateTime.Now;
+            foreach (var message in unreadMessages)
+            {
+                message.DateRead = DateTime.Now;
+            }
         }
 
-        await _context.SaveChangesAsync();
-
-        return _mapper.Map<IEnumerable<MessageDto>>(messages);
-    }
-
-    public async Task<bool> SaveAllAsync()
-    {
-        return await _context.SaveChangesAsync() > 0;
+        return await query.ProjectTo<MessageDto>(_mapper.ConfigurationProvider).ToListAsync();
     }
 
     public void AddGroup(Group group)
@@ -109,19 +102,17 @@ public class MessageRepository : IMessageRepository
             .FirstOrDefaultAsync();
     }
 
-    private async Task<List<Message>> GetMessages(string currentUsername, string recipientUsername)
+    private Task<IQueryable<Message>> GetMessages(string currentUsername, string recipientUsername)
     {
-        var messages = await _context.Messages
-            .Include(s => s.Sender).ThenInclude(p => p.Photos)
-            .Include(r => r.Recipient).ThenInclude(p => p.Photos)
+        var query = _context.Messages
             .Where(
                 u => u.RecipientUsername == currentUsername && u.RecipientDeleted == false &&
                      u.SenderUsername == recipientUsername ||
                      u.RecipientUsername == recipientUsername && u.SenderDeleted == false &&
                      u.SenderUsername == currentUsername
             )
-            .OrderByDescending(m => m.MessageSent)
-            .ToListAsync();
-        return messages;
+            .OrderBy(m => m.MessageSent)
+            .AsQueryable();
+        return Task.FromResult(query);
     }
 }

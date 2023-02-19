@@ -7,11 +7,11 @@ namespace API.Services;
 
 public class MessageService : IMessageService
 {
-    private readonly IMessageRepository _messageRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public MessageService(IMessageRepository messageRepository)
+    public MessageService(IUnitOfWork unitOfWork)
     {
-        _messageRepository = messageRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public Message AddMessage(CreateMessageDto createMessageDto, AppUser sender, AppUser recipient)
@@ -25,33 +25,33 @@ public class MessageService : IMessageService
             Content = createMessageDto.Content
         };
 
-        _messageRepository.AddMessage(message);
+        _unitOfWork.MessageRepository.AddMessage(message);
         return message;
     }
 
     public async Task<PagedList<MessageDto>> GetMessagesForUser(MessageParams messageParams)
     {
-        return await _messageRepository.GetMessagesForUser(messageParams);
+        return await _unitOfWork.MessageRepository.GetMessagesForUser(messageParams);
     }
 
     public async Task<bool> SaveAllMessagesAsync()
     {
-        return await _messageRepository.SaveAllAsync();
+        return await _unitOfWork.Complete();
     }
 
     public async Task<IEnumerable<MessageDto>> GetMessageThread(string username, string currentUsername)
     {
-        return await _messageRepository.GetMessageThread(currentUsername, username);
+        return await _unitOfWork.MessageRepository.GetMessageThread(currentUsername, username);
     }
 
     public async Task<Message> GetMessage(int id)
     {
-        return await _messageRepository.GetMessage(id);
+        return await _unitOfWork.MessageRepository.GetMessage(id);
     }
 
     public void DeleteMessage(Message message)
     {
-        _messageRepository.DeleteMessage(message);
+        _unitOfWork.MessageRepository.DeleteMessage(message);
     }
 
     public void DeleteSenderOrRecipientMessage(Message message, string username)
@@ -62,26 +62,26 @@ public class MessageService : IMessageService
 
     public void AddGroup(Group group)
     {
-        _messageRepository.AddGroup(group);
+        _unitOfWork.MessageRepository.AddGroup(group);
     }
 
     public void RemoveConnection(Connection connection)
     {
-        _messageRepository.RemoveConnection(connection);
+        _unitOfWork.MessageRepository.RemoveConnection(connection);
     }
 
     public async Task<Connection> GetConnection(string connectionId)
     {
-       return await _messageRepository.GetConnection(connectionId);
+        return await _unitOfWork.MessageRepository.GetConnection(connectionId);
     }
 
     public async Task<Group> GetMessageGroup(string groupName)
     {
-        return await _messageRepository.GetMessageGroup(groupName);
+        return await _unitOfWork.MessageRepository.GetMessageGroup(groupName);
     }
 
     public async Task<Group> GetGroupForConnection(string connectionId)
     {
-        return await _messageRepository.GetMessageGroup(connectionId);
+        return await _unitOfWork.MessageRepository.GetMessageGroup(connectionId);
     }
 }

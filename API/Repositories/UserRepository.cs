@@ -25,11 +25,6 @@ namespace API.Repositories
             _context.Entry(user).State = EntityState.Modified;
         }
 
-        public async Task<bool> SaveAllAsync()
-        {
-            return await _context.SaveChangesAsync() > 0;
-        }
-
         public async Task<IEnumerable<AppUser>> GetUsersAsync()
         {
             return await _context.Users
@@ -56,16 +51,17 @@ namespace API.Repositories
             query = query.Where(user => user.UserName != userParams.CurrentUsername);
             query = query.Where(user => user.Gender == userParams.Gender);
 
-            var minDob =DateTime.Today.AddYears(-userParams.MaxAge - 1);
+            var minDob = DateTime.Today.AddYears(-userParams.MaxAge - 1);
             var maxDob = DateTime.Today.AddYears(-userParams.MinAge);
 
             query = query.Where(user => user.DateOfBirth >= minDob && user.DateOfBirth <= maxDob);
 
-            query = userParams.OrderBy switch{
+            query = userParams.OrderBy switch
+            {
                 "created" => query.OrderByDescending(user => user.Created),
                 _ => query.OrderByDescending(user => user.LastActive)
             };
-            
+
             return await PagedList<MemberDto>.CreateAsync(
                 query.AsNoTracking().ProjectTo<MemberDto>(_mapper.ConfigurationProvider),
                 userParams.PageNumber,
@@ -78,6 +74,13 @@ namespace API.Repositories
                 .Where(x => x.UserName == username)
                 .ProjectTo<MemberDto>(_mapper.ConfigurationProvider)
                 .SingleOrDefaultAsync();
+        }
+
+        public async Task<string> GetUserGender(string username)
+        {
+            return await _context.Users.Where(x => x.UserName == username)
+                .Select(x => x.Gender)
+                .FirstOrDefaultAsync();
         }
     }
 }
