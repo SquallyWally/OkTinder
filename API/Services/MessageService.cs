@@ -82,6 +82,6 @@ public class MessageService : IMessageService
 
     public async Task<Group> GetGroupForConnection(string connectionId)
     {
-        return await _unitOfWork.MessageRepository.GetMessageGroup(connectionId);
+        return await _unitOfWork.MessageRepository.GetGroupForConnection(connectionId);
     }
 }

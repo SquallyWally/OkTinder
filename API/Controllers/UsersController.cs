@@ -16,18 +16,18 @@ namespace API.Controllers
         private readonly IPhotoService _photoService;
         private readonly IUserService _userService;
 
-        public UsersController( IMapper mapper, IPhotoService photoService, IUserService userService)
+        public UsersController(IMapper mapper, IPhotoService photoService, IUserService userService)
         {
             _mapper = mapper;
             _photoService = photoService;
             _userService = userService;
         }
-        
+
         [HttpGet]
         public async Task<ActionResult<PagedList<MemberDto>>> GetUsers([FromQuery] UserParams userParams)
         {
             await _userService.SetDefaultGenderFilter(userParams, User.GetUsername());
-          
+
             var users = await _userService.GetMembers(userParams);
 
             Response.AddPaginationHeader(new PaginationHeader(
@@ -35,20 +35,20 @@ namespace API.Controllers
                 users.PageSize,
                 users.TotalCount,
                 users.TotalPages));
-            
+
             return Ok(users);
         }
 
-        
+
         // api/users/{username}
         [Authorize(Roles = "Member")]
         [HttpGet("{username}", Name = "GetUser")]
         public async Task<ActionResult<MemberDto>> GetUser(string username)
         {
-            var retrievedUser = _userService.GetMember(username);
-            return await Task.FromResult<ActionResult>(Ok(retrievedUser));
+            var currentUsername = User.GetUsername();
+            return await _userService.GetMember(username, isCurrentUser: currentUsername == username);
         }
-        
+
         [HttpPut]
         public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
         {
@@ -63,7 +63,7 @@ namespace API.Controllers
         public async Task<ActionResult<PhotoDto>> AddPhoto(IFormFile file)
         {
             var user = await _userService.GetUserByUsername(User.GetUsername());
-            
+
             var result = await _photoService.AddPhotoAsync(file);
             if (result.Error != null) return BadRequest(result.Error.Message);
 
@@ -76,7 +76,7 @@ namespace API.Controllers
 
             return BadRequest("We have a problem while adding a photo");
         }
-        
+
 
         [HttpPut("set-main-photo/{photoId}")]
         public async Task<ActionResult> SetMainPhoto(int photoId)
@@ -91,13 +91,13 @@ namespace API.Controllers
 
             return BadRequest("Failed to set main photo");
         }
-        
+
 
         [HttpDelete("delete-photo/{photoId}")]
         public async Task<ActionResult> DeletePhoto(int photoId)
         {
             var user = await _userService.GetUserByUsername(User.GetUsername());
-            var photo = user.Photos.FirstOrDefault(p => p.Id == photoId);
+            var photo = await _photoService.GetPhotoById(photoId);
 
             switch (photo)
             {
@@ -114,6 +114,7 @@ namespace API.Controllers
             }
 
             user.Photos.Remove(photo);
+           // _photoService.RemovePhoto(photo);
             if (await _userService.SaveAllUserAsync()) return Ok();
             return BadRequest("Failed to delete the photo");
         }

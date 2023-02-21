@@ -9,7 +9,8 @@ public interface IUserService
     Task SetDefaultGenderFilter(UserParams userParams, string username);
     Task UpdateUser(MemberUpdateDto memberUpdateDto, string username);
     Task<PagedList<MemberDto>> GetMembers(UserParams userParams);
-    Task<MemberDto> GetMember(string username);
+    Task<MemberDto> GetMember(string username, bool isCurrentUser);
     Task<AppUser> GetUserByUsername(string username);
     Task<bool> SaveAllUserAsync();
+    Task<AppUser> GetUserByPhotoId(int id);
 }
